@@ -84,3 +84,13 @@ class PrivateTagApiTests(TestCase):
             name=payload['name'],
             user=self.user
         ).exists())
+
+    def test_pass_id_on_create_payload_invalid(self):
+        """Test that the tag id cannot be set by the request"""
+        payload = {'name': 'TestTag', 'id': 200}
+        self.client.post(TAG_LIST_URL, payload)
+
+        self.assertNotEqual(Tag.objects.get(
+            name=payload['name'],
+            user=self.user
+        ).id, payload['id'])
