@@ -40,7 +40,7 @@ class PrivateTagApiTests(TestCase):
         """Test the user can retrive their tags"""
         Tag.objects.create(name="TestTag1", user=self.user)
         Tag.objects.create(name="TestTag2", user=self.user)
-        tags = Tag.objects.all().order_by('-name')
+        tags = Tag.objects.all().order_by('name')
         serializer = TagSerializer(tags, many=True)
 
         res = self.client.get(TAG_LIST_URL)
