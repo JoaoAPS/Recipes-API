@@ -61,3 +61,33 @@ class PrivateIngredientApiTests(TestCase):
 
         self.assertEqual(len(res.data), 1)
         self.assertEqual(res.data[0]['name'], ing.name)
+
+    def test_create_ingredient_successful(self):
+        """Test the user can create an ingredient"""
+        payload = {'name': 'TestIng'}
+        res = self.client.post(INGREDIENT_LIST_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Ingredient.objects.filter(
+            user=self.user, name=payload['name']
+        ).exists())
+
+    def test_create_ingredient_invalid(self):
+        """Test that invalid payload doesn't create ingredient"""
+        payload = {'name': ''}
+        res = self.client.post(INGREDIENT_LIST_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(Ingredient.objects.filter(
+            user=self.user, name=payload['name']
+        ).exists())
+
+    def test_cant_set_id_by_api(self):
+        """Test that the id of the new ingredient is not controlled by api"""
+        payload = {'name': 'TestIng', 'id': 200}
+        res = self.client.post(INGREDIENT_LIST_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(Ingredient.objects.filter(
+            user=self.user, name=payload['name'], id=payload['id']
+        ).exists())

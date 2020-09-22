@@ -20,11 +20,15 @@ class TagViewSet(
         return self.queryset.filter(user=self.request.user).order_by('-name')
 
     def perform_create(self, serializer):
-        """Create a new tag"""
+        """Create a new tag setting the user"""
         serializer.save(user=self.request.user)
 
 
-class IngredientViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+class IngredientViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+):
     """Manage ingredients on the database"""
     queryset = models.Ingredient.objects.all()
     serializer_class = serializers.IngredientSerializer
@@ -34,3 +38,7 @@ class IngredientViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
     def get_queryset(self):
         """Return objects of the current authenticated user only"""
         return self.queryset.filter(user=self.request.user).order_by('name')
+
+    def perform_create(self, serializer):
+        """Creates a new ingredient setting the user"""
+        serializer.save(user=self.request.user)
