@@ -36,8 +36,8 @@ class Recipe(models.Model):
     time_minutes = models.IntegerField()
     price = models.DecimalField(max_digits=6, decimal_places=2)
     link = models.CharField(max_length=255, blank=True)
-    ingredients = models.ManyToManyField('Ingredient', related_name='recipes')
-    tags = models.ManyToManyField('Tag', related_name='recipes')
+    ingredients = models.ManyToManyField(Ingredient, related_name='recipes')
+    tags = models.ManyToManyField(Tag, related_name='recipes')
 
     def __str__(self):
         return self.title
