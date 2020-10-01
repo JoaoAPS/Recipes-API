@@ -41,6 +41,19 @@ class RecipeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id']
 
+    def validate_time_minutes(self, value):
+        """Validate time_minutes field"""
+        if value < 0:
+            raise serializers.ValidationError(
+                "Time duration cannot be negative!")
+        return value
+
+    def validate_price(self, value):
+        """Validate time_minutes field"""
+        if value < 0:
+            raise serializers.ValidationError("Price cannot be negative!")
+        return value
+
 
 class RecipeDetailSerializer(RecipeSerializer):
     ingredients = IngredientSerializer(many=True, read_only=True)

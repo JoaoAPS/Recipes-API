@@ -12,6 +12,8 @@ from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 RECIPE_LIST_URL = reverse('recipe:recipe-list')
 
 
+# Helper functions
+
 def recipe_detail_url(id):
     return reverse('recipe:recipe-detail', args=[id])
 
@@ -39,6 +41,17 @@ def sample_ingredient(user, name='Test Ing'):
 
 def sample_tag(user, name='Test Tag'):
     return Tag.objects.create(user=user, name=name)
+
+
+def sample_recipe_payload(**params):
+    defaults = {
+        'title': 'Test Recipe',
+        'time_minutes': 5,
+        'price': 50.0
+    }
+    defaults.update(params)
+
+    return defaults
 
 
 class PublicRecipeApiTests(TestCase):
@@ -121,3 +134,86 @@ class PrivateRecipeApiTests(TestCase):
         res = self.client.get(recipe_detail_url(recipe.id))
 
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_basic_recipe_successful(self):
+        """Test creating a new recipe with no ingredients or tags assigned"""
+        payload = sample_recipe_payload(link='www.testlink.com')
+        res = self.client.post(RECIPE_LIST_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            Recipe.objects.filter(user=self.user, **payload).exists()
+        )
+
+        # Test creating with no link
+        payload = sample_recipe_payload()
+        res = self.client.post(RECIPE_LIST_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(Recipe.objects.all()), 2)
+        self.assertTrue(
+            Recipe.objects.filter(user=self.user, **payload).exists()
+        )
+
+    def test_create_basic_recipe_invalid_payload(self):
+        """Test refusing recipe creation with invalid payload"""
+        payloads = [
+            sample_recipe_payload(title=''),
+            sample_recipe_payload(time_minutes=-1),
+            sample_recipe_payload(time_minutes=5.4),
+            sample_recipe_payload(price=-1.0),
+            {
+                'time_minutes': 5,
+                'price': 50.0
+            },
+            {
+                'title': 'Test',
+                'price': 50.0
+            },
+            {
+                'title': 'Test',
+                'time_minutes': 5,
+            },
+        ]
+
+        for payload in payloads:
+            res = self.client.post(RECIPE_LIST_URL, payload)
+
+            self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(len(Recipe.objects.all()), 0)
+
+    def test_create_full_recipe_successful(self):
+        """Test creating a new recipe with ingredients and tags assigned"""
+        ingredient1 = sample_ingredient(self.user)
+        ingredient2 = sample_ingredient(self.user)
+        tag = sample_tag(self.user)
+
+        payload = sample_recipe_payload()
+        payload.update({
+            'ingredients': [ingredient1.id, ingredient2.id],
+            'tags': [tag.id]
+        })
+
+        res = self.client.post(RECIPE_LIST_URL, payload)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        recipe = Recipe.objects.get(id=res.data['id'])
+        self.assertEqual(recipe.ingredients.all().count(), 2)
+        self.assertEqual(recipe.tags.all().count(), 1)
+        self.assertIn(tag, recipe.tags.all())
+        self.assertIn(ingredient1, recipe.ingredients.all())
+        self.assertIn(ingredient2, recipe.ingredients.all())
+
+    def test_create_full_recipe_invalid_payload(self):
+        """Test refusing full recipe creation with invalid payload"""
+        payloads = [
+            sample_recipe_payload().update({'ingredients': [1000]}),
+            sample_recipe_payload().update({'tags': [1000]})
+        ]
+
+        for payload in payloads:
+            res = self.client.post(RECIPE_LIST_URL, payload)
+
+            self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(len(Recipe.objects.all()), 0)
