@@ -217,3 +217,26 @@ class PrivateRecipeApiTests(TestCase):
 
             self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(len(Recipe.objects.all()), 0)
+
+    def test_update_recipe(self):
+        """Test updating a recipe"""
+        # PUT
+        recipe = sample_recipe(user=self.user, price=10.00, time_minutes=10)
+        payload = sample_recipe_payload(price=50.00)
+        res = self.client.put(recipe_detail_url(recipe.id), payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            Recipe.objects.get(id=recipe.id).price,
+            payload['price']
+        )
+
+        # PATCH
+        payload = {'time_minutes': 30}
+        res = self.client.patch(recipe_detail_url(recipe.id), payload)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            Recipe.objects.get(id=recipe.id).time_minutes,
+            payload['time_minutes']
+        )
