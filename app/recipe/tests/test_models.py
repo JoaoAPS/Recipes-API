@@ -11,12 +11,12 @@ def sample_user(email='test@gotmail.com', password='testpass', name='Name'):
 
 def sample_tag(user, name='TestTag'):
     """Create a sample tag"""
-    return mnodels.Tag.objects.create(user=user, name=name)
+    return models.Tag.objects.create(user=user, name=name)
 
 
 def sample_ingredient(user, name='TestIngredient'):
     """Create a sample ingredient"""
-    return mnodels.Ingredient.objects.create(user=user, name=name)
+    return models.Ingredient.objects.create(user=user, name=name)
 
 
 class ModelTest(TestCase):
